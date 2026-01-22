@@ -12,9 +12,12 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+import java.io.Serializable;
+
 public class AddCityFragment extends DialogFragment {
     interface AddCityDialogListener {
         void addCity(City city);
+        void updateCity(City city);
     }
     private AddCityDialogListener listener;
     @Override
@@ -29,20 +32,57 @@ public class AddCityFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
         View view =
                 LayoutInflater.from(getContext()).inflate(R.layout.fragment_add_city, null);
         EditText editCityName = view.findViewById(R.id.edit_text_city_text);
         EditText editProvinceName = view.findViewById(R.id.edit_text_province_text);
+
+        City city;
+        Bundle args = getArguments();
+        if (args != null) {
+            city = (City) args.getSerializable("city");
+        } else {
+            city = null;
+        }
+
+        if (city != null) {
+            editCityName.setText(city.getName());
+            editProvinceName.setText(city.getProvince());
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+
         return builder
                 .setView(view)
-                .setTitle("Add a city")
+                .setTitle("Add/edit city")
                 .setNegativeButton("Cancel", null)
-                .setPositiveButton("Add", (dialog, which) -> {
+                .setPositiveButton("OK", (dialog, which) -> {
                     String cityName = editCityName.getText().toString();
                     String provinceName = editProvinceName.getText().toString();
-                    listener.addCity(new City(cityName, provinceName));
+
+                    if (city == null) {
+                        listener.addCity(new City(cityName, provinceName));
+
+                    } else {
+                        city.setName(cityName);
+                        city.setProvince(provinceName);
+                        listener.updateCity(city);
+                    }
                 })
                 .create();
+
+
+
     }
+
+    static AddCityFragment newInstance(City city) {
+        Bundle args = new Bundle();
+        args.putSerializable("city", (Serializable) city);
+
+        AddCityFragment fragment = new AddCityFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
 }
